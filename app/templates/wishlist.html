@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Your Wishlist <i class="fa-solid fa-heart text-danger"></i></h2>
+
+    {% if not wishlist_items %}
+    <div class="alert alert-light text-center py-5 border shadow-sm">
+        <i class="fa-regular fa-heart fa-3x mb-3 text-muted"></i>
+        <h4>Your Wishlist is empty.</h4>
+        <p class="mb-4">Explore more and shortlist some items!</p>
+        <a href="{{ url_for('main.home') }}" class="btn btn-warning">Continue Shopping</a>
+    </div>
+    {% else %}
+    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+        {% for item in wishlist_items %}
+        <div class="col">
+            <div class="card h-100 product-card shadow-sm">
+                <div class="position-relative"
+                    style="height: 200px; display: flex; align-items: center; justify-content: center; background-color: #fff;">
+                    <img src="{{ item.product.image_url }}" class="card-img-top p-3" alt="{{ item.product.name }}"
+                        style="max-height: 100%; width: auto;">
+                    <a href="{{ url_for('main.remove_from_wishlist', id=item.id) }}"
+                        class="position-absolute top-0 end-0 m-2 text-decoration-none text-danger bg-white rounded-circle p-2 shadow-sm"
+                        style="width: 35px; height: 35px; text-align: center; line-height: 20px;"
+                        data-bs-toggle="tooltip" title="Remove">
+                        <i class="fa-solid fa-trash"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title text-truncate mb-1"><a
+                            href="{{ url_for('main.product_detail', id=item.product.id) }}"
+                            class="text-dark text-decoration-none">{{ item.product.name }}</a></h6>
+                    <div class="mb-2">
+                        <span class="text-warning small"><i class="fa-solid fa-star"></i> {{ item.product.rating
+                            }}</span>
+                    </div>
+                    <h5 class="fw-bold mb-2">${{ item.product.price }}</h5>
+                    <form action="{{ url_for('main.add_to_cart', id=item.product.id) }}" method="POST">
+                        <button class="btn btn-warning btn-sm w-100 rounded-pill">Add to Cart</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

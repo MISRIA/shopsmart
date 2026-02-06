@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.home') }}" class="text-decoration-none">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.products', category=product.category) }}"
+                    class="text-decoration-none">{{ product.category }}</a></li>
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Image Section -->
+        <div class="col-md-5 mb-4 text-center">
+            <div class="card border-0 shadow-sm p-3 bg-white product-image-container">
+                <img src="{{ product.image_url }}" class="img-fluid rounded" alt="{{ product.name }}"
+                    style="max-height: 450px; width: auto; object-fit: contain;">
+            </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="col-md-4 mb-4">
+            <h2 class="fw-bold text-dark">{{ product.name }}</h2>
+            <div class="mb-3 d-flex align-items-center">
+                <div class="text-warning small me-2">
+                    {% for i in range(product.rating|int) %}<i class="fa-solid fa-star"></i>{% endfor %}
+                    {% if product.rating % 1 != 0 %}<i class="fa-solid fa-star-half-stroke"></i>{% endif %}
+                </div>
+                <a href="#reviews" class="text-primary text-decoration-none small fw-bold">{{ product.reviews|length }}
+                    ratings</a>
+            </div>
+            <hr class="my-4">
+            <div class="price-stack mb-4">
+                <span class="text-danger h3 fw-bold mb-0">${{ "%.2f"|format(product.price) }}</span>
+                <p class="text-muted small">Inclusive of all taxes</p>
+            </div>
+            <p class="text-dark">{{ product.description }}</p>
+
+            <div class="delivery-info mt-4 p-3 bg-light rounded-3 border">
+                {% if product.is_fast_delivery %}
+                <div class="d-flex align-items-center text-success mb-2">
+                    <i class="fa-solid fa-bolt me-2"></i>
+                    <span class="fw-bold">Fast Delivery by Tomorrow</span>
+                </div>
+                <p class="small text-muted mb-0">Order within 5 hours for next-day arrival.</p>
+                {% else %}
+                <div class="d-flex align-items-center text-dark mb-2">
+                    <i class="fa-solid fa-truck me-2 text-primary"></i>
+                    <span class="fw-bold">Standard Delivery (3-5 days)</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Buy Box -->
+        <div class="col-md-3">
+            <div class="card shadow rounded-4 border-0">
+                <div class="card-body p-4">
+                    <h3 class="fw-bold text-dark mb-4">${{ "%.2f"|format(product.price) }}</h3>
+                    <div class="text-success small fw-bold mb-4">
+                        <i class="fa-solid fa-check-circle me-1"></i> In Stock.
+                    </div>
+
+                    <form action="{{ url_for('main.add_to_cart', id=product.id) }}" method="POST">
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted">Quantity:</label>
+                            <select class="form-select border-0 bg-light shadow-sm" name="quantity">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select>
+                        </div>
+
+                        <button type="submit"
+                            class="btn btn-warning w-100 rounded-pill py-2 fw-bold mb-3 shadow-sm hover-scale">
+                            Add to Cart
+                        </button>
+
+                        <!-- Buy Now Form -->
+                        <input type="hidden" name="buy_now" value="false" id="buyNowField">
+                    </form>
+
+                    <form action="{{ url_for('main.add_to_cart', id=product.id) }}" method="POST">
+                        <input type="hidden" name="buy_now" value="true">
+                        <button type="submit"
+                            class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm hover-scale">
+                            Buy Now
+                        </button>
+                    </form>
+
+                    <div class="mt-4 pt-3 border-top small text-muted">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Sold by</span><strong class="text-dark">ShopSmart Official</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Service</span><strong class="text-success"><i
+                                    class="fa-solid fa-shield-halved me-1"></i>Secure</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Frequently Bought Together -->
+    <div class="card border-0 shadow-sm rounded-4 mt-5 p-4 bg-white">
+        <h4 class="fw-bold mb-4">Frequently Bought Together <i class="fa-solid fa-layer-group text-primary ms-1"></i>
+        </h4>
+        <div class="row align-items-center g-4">
+            <div class="col-auto">
+                <div class="fbt-item text-center">
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}"
+                        class="img-thumbnail border-0 rounded-3 mb-2"
+                        style="height: 120px; width: 120px; object-fit: contain;">
+                    <div class="form-check d-flex justify-content-center">
+                        <input class="form-check-input" type="checkbox" checked disabled>
+                    </div>
+                </div>
+            </div>
+
+            {% set recommendations = get_recommendations(product.id) %}
+            {% if recommendations %}
+            {% for rec in recommendations %}
+            <div class="col-auto">
+                <i class="fa-solid fa-plus text-muted opacity-50 px-2"></i>
+            </div>
+            <div class="col-auto">
+                <div class="fbt-item text-center">
+                    <a href="{{ url_for('main.product_detail', id=rec.id) }}">
+                        <img src="{{ rec.image_url }}" alt="{{ rec.name }}"
+                            class="img-thumbnail border-0 rounded-3 mb-2"
+                            style="height: 120px; width: 120px; object-fit: contain;">
+                    </a>
+                    <div class="form-check d-flex justify-content-center">
+                        <input class="form-check-input fbt-check" type="checkbox" value="{{ rec.id }}"
+                            data-price="{{ rec.price }}" onchange="updateFBTTotal()" checked>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="col-lg-4 ms-lg-auto">
+                <div
+                    class="p-3 bg-primary-subtle rounded-4 h-100 d-flex flex-column justify-content-center border border-primary-subtle">
+                    {% set total_fbt = product.price %}
+                    {% for rec in recommendations %}{% set total_fbt = total_fbt + rec.price %}{% endfor %}
+                    <p class="mb-2 text-dark fs-5">Total Price: <strong class="text-danger" id="fbt-total-display">${{
+                            "%.2f"|format(total_fbt) }}</strong></p>
+                    <button class="btn btn-warning rounded-pill fw-bold shadow-sm" id="add-bundle-btn"
+                        data-product-id="{{ product.id }}" data-base-price="{{ product.price }}"
+                        onclick="addAllToCart()">Add Selected to Cart</button>
+                </div>
+            </div>
+            {% else %}
+            <div class="col">
+                <p class="text-muted small italic">Browse more products to see smart recommendations!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- User Reviews -->
+    <div class="mt-5 pt-4 border-top" id="reviews">
+        <h4 class="fw-bold text-dark mb-4">Customer Reviews</h4>
+        
+        <!-- Add Review Form -->
+        <div class="card border-0 shadow-sm rounded-4 mb-5 p-4 bg-light">
+            <h5 class="fw-bold mb-3">Write a Review</h5>
+            <form action="{{ url_for('main.add_review', id=product.id) }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Rating</label>
+                    <div class="rating-input d-flex gap-2">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="rating" id="rating5" value="5" checked>
+                            <label class="form-check-label" for="rating5">5 <i class="fa-solid fa-star text-warning"></i></label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="rating" id="rating4" value="4">
+                            <label class="form-check-label" for="rating4">4 <i class="fa-solid fa-star text-warning"></i></label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="rating" id="rating3" value="3">
+                            <label class="form-check-label" for="rating3">3 <i class="fa-solid fa-star text-warning"></i></label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="rating" id="rating2" value="2">
+                            <label class="form-check-label" for="rating2">2 <i class="fa-solid fa-star text-warning"></i></label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="rating" id="rating1" value="1">
+                            <label class="form-check-label" for="rating1">1 <i class="fa-solid fa-star text-warning"></i></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="comment" class="form-label fw-bold small">Your Comment</label>
+                    <textarea class="form-control border-0 shadow-sm" id="comment" name="comment" rows="3" placeholder="What did you like or dislike?" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm">Submit Review</button>
+            </form>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                {% if product.reviews %}
+                {% for review in product.reviews %}
+                <div class="review-item mb-4 pb-4 border-bottom">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="bg-secondary text-white rounded-circle me-3 d-flex align-items-center justify-content-center"
+                            style="width: 40px; height: 40px;">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">{{ review.author.name if review.author else 'Verified Customer' }}
+                            </h6>
+                            <div class="text-warning small">
+                                {% for i in range(review.rating) %}<i class="fa-solid fa-star"></i>{% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <p class="mb-1 text-dark">{{ review.comment }}</p>
+                    <small class="text-muted">Reviewed in India on {{ review.created_at.strftime('%B %d, %Y') if
+                        review.created_at else 'N/A' }}</small>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted">No reviews yet. Be the first to review!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateFBTTotal() {
+        const btn = document.getElementById('add-bundle-btn');
+        let basePrice = parseFloat(btn.getAttribute('data-base-price'));
+        let total = basePrice;
+        document.querySelectorAll('.fbt-check:checked').forEach(chk => {
+            total += parseFloat(chk.getAttribute('data-price'));
+        });
+        document.getElementById('fbt-total-display').innerText = '$' + total.toFixed(2);
+    }
+
+    async function addAllToCart() {
+        const btn = document.getElementById('add-bundle-btn');
+        const productId = btn.getAttribute('data-product-id');
+        const ids = [productId];
+        document.querySelectorAll('.fbt-check:checked').forEach(chk => {
+            ids.push(chk.value);
+        });
+
+        for (const pid of ids) {
+            await fetch(`/add_to_cart/${pid}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'quantity=1'
+            });
+        }
+        window.location.href = "{{ url_for('main.cart') }}";
+    }
+</script>
+
+<style>
+    .product-image-container:hover img {
+        transform: scale(1.05);
+        transition: transform 0.3s ease;
+    }
+
+    .hover-scale:hover {
+        transform: scale(1.02);
+        transition: 0.2s;
+    }
+
+    .fbt-item img {
+        transition: 0.3s;
+    }
+
+    .fbt-item img:hover {
+        border: 1px solid #ff9900 !important;
+        cursor: pointer;
+    }
+
+    .bg-primary-subtle {
+        background-color: #f1f6ff !important;
+        border-color: #d1e3ff !important;
+    }
+
+    .delivery-info {
+        background: rgba(0, 0, 0, 0.02) !important;
+        border: 1px dashed #dee2e6 !important;
+    }
+</style>
+{% endblock %}

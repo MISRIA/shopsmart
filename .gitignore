@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.eggs/
+*.log
+
+# Environments
+.env
+.env.*
+venv/
+.envrc
+myenv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Database
+*.sqlite3
+*.db
+instance/
+
+# Static build artifacts
+/dist/
+build/

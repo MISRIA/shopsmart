@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Manage Orders</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fa-solid fa-truck-fast me-2"></i>Manage Orders</h2>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td><strong>#{{ order.id }}</strong></td>
+                        <td>{{ order.customer.name }}<br><small class="text-muted">{{ order.customer.email }}</small>
+                        </td>
+                        <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>${{ "%.2f"|format(order.total_price) }}</td>
+                        <td>
+                            <span class="badge rounded-pill 
+                                {% if order.status == 'Delivered' %}bg-success
+                                {% elif order.status == 'Shipped' %}bg-primary
+                                {% elif order.status == 'Cancelled' %}bg-danger
+                                {% elif order.status == 'Confirmed' %}bg-info
+                                {% else %}bg-warning{% endif %}">
+                                {{ order.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <form action="{{ url_for('admin.update_order_status', id=order.id) }}" method="POST"
+                                class="d-inline-flex">
+                                <select name="status" class="form-select form-select-sm me-2"
+                                    onchange="this.form.submit()">
+                                    <option value="Pending" {% if order.status=='Pending' %}selected{% endif %}>Pending
+                                    </option>
+                                    <option value="Confirmed" {% if order.status=='Confirmed' %}selected{% endif %}>
+                                        Confirmed</option>
+                                    <option value="Shipped" {% if order.status=='Shipped' %}selected{% endif %}>Shipped
+                                    </option>
+                                    <option value="Delivered" {% if order.status=='Delivered' %}selected{% endif %}>
+                                        Delivered</option>
+                                    <option value="Cancelled" {% if order.status=='Cancelled' %}selected{% endif %}>
+                                        Cancelled</option>
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

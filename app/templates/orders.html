@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Your Orders <i class="fa-solid fa-box text-primary"></i></h2>
+
+    {% if not orders %}
+    <div class="alert alert-light text-center py-5 border shadow-sm">
+        <i class="fa-solid fa-bag-shopping fa-3x mb-3 text-muted"></i>
+        <h4>You haven't placed any orders yet.</h4>
+        <p class="mb-4">Try adding some items to your cart and checkout!</p>
+        <a href="{{ url_for('main.home') }}" class="btn btn-warning">Start Shopping</a>
+    </div>
+    {% else %}
+    <div class="row">
+        {% for order in orders %}
+        <div class="col-12 mb-5">
+            <div class="card shadow-sm border-0">
+                <!-- Order Header -->
+                <div
+                    class="card-header bg-white border-bottom py-3 d-flex flex-wrap justify-content-between align-items-center">
+                    <div class="me-4 mb-2 mb-md-0">
+                        <span class="text-muted small text-uppercase">ORDER PLACED</span><br>
+                        <strong class="text-dark">{{ order.created_at.strftime('%B %d, %Y') if order.created_at else
+                            'N/A' }}</strong>
+                    </div>
+                    <div class="me-4 mb-2 mb-md-0">
+                        <span class="text-muted small text-uppercase">TOTAL</span><br>
+                        <strong class="text-dark">${{ "%.2f"|format(order.total_price) }}</strong>
+                    </div>
+                    <div class="me-4 mb-2 mb-md-0">
+                        <span class="text-muted small text-uppercase">SHIP TO</span><br>
+                        <strong class="text-dark text-truncate d-inline-block" style="max-width: 150px;">{{
+                            current_user.name }}</strong>
+                    </div>
+                    <div class="ms-md-auto text-md-end">
+                        <span class="text-muted small text-uppercase">ORDER # {{ order.id }}</span><br>
+                        <a href="#" class="text-primary text-decoration-none small">Order Details</a> | <a href="#"
+                            class="text-primary text-decoration-none small">Invoice</a>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="row">
+                        <!-- Left Column: Products -->
+                        <div class="col-lg-8 border-end">
+                            <h5 class="fw-bold mb-4 {% if order.status == 'Delivered' %}text-success{% endif %}">
+                                {% if order.status == 'Delivered' %}
+                                <i class="fa-solid fa-check-circle me-1"></i> Delivered {{
+                                order.estimated_delivery.strftime('%B %d') if order.estimated_delivery else '' }}
+                                {% else %}
+                                <i class="fa-solid fa-truck-fast me-1 text-primary"></i>
+                                Arriving by {{ order.estimated_delivery.strftime('%B %d') if order.estimated_delivery
+                                else 'Soon' }}
+                                {% endif %}
+                            </h5>
+
+                            {% for item in order.items %}
+                            <div class="d-flex align-items-start mb-4">
+                                <div class="bg-light rounded p-2 me-3"
+                                    style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
+                                    <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}"
+                                        class="img-fluid" style="max-height: 80px;">
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1"><a href="{{ url_for('main.product_detail', id=item.product.id) }}"
+                                            class="text-dark text-decoration-none hover-primary">{{ item.product.name
+                                            }}</a></h6>
+                                    <p class="text-muted small mb-0">Qty: {{ item.quantity }}</p>
+                                    <p class="fw-bold text-dark mt-1">${{ "%.2f"|format(item.product.price) }}</p>
+                                    <div class="mt-2 text-nowrap">
+                                        <form action="{{ url_for('main.add_to_cart', id=item.product.id) }}"
+                                            method="POST" class="d-inline">
+                                            <button type="submit"
+                                                class="btn btn-warning btn-sm rounded-pill px-3 me-2">Buy it
+                                                again</button>
+                                        </form>
+                                        <a href="{{ url_for('main.product_detail', id=item.product.id) }}"
+                                            class="btn btn-outline-secondary btn-sm rounded-pill px-3">View item</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Right Column: Tracking & Actions -->
+                        <div class="col-lg-4 ps-lg-4">
+                            <div class="tracking-section mb-4">
+                                <label class="form-label small fw-bold text-uppercase text-muted mb-3">Order
+                                    Progress</label>
+
+                                {% set progress = 25 %}
+                                {% if order.status == 'Shipped' %}{% set progress = 60 %}
+                                {% elif order.status == 'Delivered' %}{% set progress = 100 %}
+                                {% endif %}
+
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar {% if order.status == 'Delivered' %}bg-success{% else %}bg-primary{% endif %} orders-progress-bar"
+                                        role="progressbar" data-progress="{{ progress or 0 }}"
+                                        aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+
+                                <div class="d-flex justify-content-between small text-muted">
+                                    <span class="{% if progress >= 25 %}text-dark fw-bold{% endif %}">Ordered</span>
+                                    <span class="{% if progress >= 60 %}text-dark fw-bold{% endif %}">Shipped</span>
+                                    <span class="{% if progress == 100 %}text-dark fw-bold{% endif %}">Delivered</span>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-primary rounded-pill shadow-sm" data-bs-toggle="modal"
+                                    data-bs-target="#trackModal{{ order.id }}">
+                                    Track package
+                                </button>
+                                {% if order.is_cancelable %}
+                                <form action="{{ url_for('main.cancel_order', id=order.id) }}" method="POST" class="d-grid">
+                                    <button type="submit" class="btn btn-outline-danger rounded-pill" onclick="return confirm('Are you sure you want to cancel this order?')">Cancel Order</button>
+                                </form>
+                                {% endif %}
+                                <button class="btn btn-outline-secondary rounded-pill">Return or replace items</button>
+                                <button class="btn btn-outline-secondary rounded-pill">Leave product review</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tracking Modal -->
+            <div class="modal fade" id="trackModal{{ order.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fw-bold">Tracking Details - Order #{{ order.id }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body py-4">
+                            <div class="tracking-history position-relative ms-4">
+                                <div class="line position-absolute h-100 border-start border-2 border-primary"
+                                    style="left: -15px;"></div>
+
+                                <!-- Milestone: Delivered -->
+                                <div
+                                    class="milestone mb-4 position-relative {% if order.status != 'Delivered' %}opacity-50{% endif %}">
+                                    <div class="dot position-absolute rounded-circle bg-{% if order.status == 'Delivered' %}success{% else %}secondary{% endif %}"
+                                        style="left: -19px; top: 5px; width: 10px; height: 10px; z-index: 1;"></div>
+                                    <h6 class="fw-bold mb-1">Delivered</h6>
+                                    <p class="small text-muted mb-0">Expected: {{ order.estimated_delivery.strftime('%B
+                                        %d, %Y') if order.estimated_delivery else 'Soon' }}</p>
+                                    <p class="small text-muted">Your package has been delivered.</p>
+                                </div>
+
+                                <!-- Milestone: Out for delivery -->
+                                <div
+                                    class="milestone mb-4 position-relative {% if order.status == 'Confirmed' %}opacity-50{% endif %}">
+                                    <div class="dot position-absolute rounded-circle bg-{% if order.status in ['Shipped', 'Delivered'] %}primary{% else %}secondary{% endif %}"
+                                        style="left: -19px; top: 5px; width: 10px; height: 10px; z-index: 1;"></div>
+                                    <h6 class="fw-bold mb-1">Out for delivery</h6>
+                                    <p class="small text-muted">Package is with the local delivery partner.</p>
+                                </div>
+
+                                <!-- Milestone: Shipped -->
+                                <div
+                                    class="milestone mb-4 position-relative {% if order.status == 'Confirmed' %}opacity-50{% endif %}">
+                                    <div class="dot position-absolute rounded-circle bg-{% if order.status in ['Shipped', 'Delivered'] %}primary{% else %}secondary{% endif %}"
+                                        style="left: -19px; top: 5px; width: 10px; height: 10px; z-index: 1;"></div>
+                                    <h6 class="fw-bold mb-1">Shipped</h6>
+                                    <p class="small text-muted">Package left our fulfillment center.</p>
+                                </div>
+
+                                <!-- Milestone: Ordered -->
+                                <div class="milestone position-relative">
+                                    <div class="dot position-absolute rounded-circle bg-primary"
+                                        style="left: -19px; top: 5px; width: 10px; height: 10px; z-index: 1;"></div>
+                                    <h6 class="fw-bold mb-1">Order Placed</h6>
+                                    <p class="small text-muted mb-0">{{ order.created_at.strftime('%B %d, %Y at %H:%M')
+                                        if order.created_at else 'N/A' }}</p>
+                                    <p class="small text-muted">We have received your order.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn btn-secondary rounded-pill"
+                                data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .hover-primary:hover {
+        color: #0d6efd !important;
+        text-decoration: underline !important;
+    }
+
+    .tracking-history .milestone:last-child {
+        margin-bottom: 0 !important;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.orders-progress-bar').forEach(function (bar) {
+            bar.style.width = bar.getAttribute('data-progress') + '%';
+        });
+    });
+</script>
+{% endblock %}

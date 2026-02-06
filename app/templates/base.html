@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ShopSmart{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        /* Chatbot Styles inline for specificity */
+        .chatbot-message-user {
+            background-color: #007bff;
+            color: white;
+            border-radius: 15px 15px 0 15px;
+            padding: 8px 12px;
+            margin-left: auto;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .chatbot-message-bot {
+            background-color: #e9ecef;
+            color: black;
+            border-radius: 15px 15px 15px 0;
+            padding: 8px 12px;
+            margin-right: auto;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{{ url_for('main.home') }}">
+                <i class="fa-solid fa-bag-shopping me-2"></i>ShopSmart
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fa-solid fa-list me-1"></i>Categories
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('main.products') }}">All Products</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item"
+                                    href="{{ url_for('main.products', category='Electronics') }}">Electronics</a></li>
+                            <li><a class="dropdown-item"
+                                    href="{{ url_for('main.products', category='Fashion') }}">Fashion</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.products', category='Toys') }}">Toys</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <!-- Search Bar -->
+                <form class="d-flex mx-auto w-50" action="{{ url_for('main.products') }}" method="GET">
+                    <div class="input-group">
+                        <input type="search" class="form-control border-end-0 rounded-start-pill ps-4" name="q"
+                            placeholder="Search ShopSmart...">
+                        <button class="btn btn-warning rounded-end-pill px-4" type="submit">
+                            <i class="fa-solid fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+
+
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
+                            Hello, {{ current_user.name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">Your Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.orders') }}">Your Orders</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.wishlist') }}">Wishlist</a></li>
+                            {% if current_user.role == 'admin' %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">Admin Panel</a></li>
+                            {% endif %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{{ url_for('auth.login') }}">Login</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="nav-item ms-3">
+                        <a class="nav-link position-relative text-white" href="{{ url_for('main.cart') }}">
+                            <i class="fa-solid fa-cart-shopping fa-lg"></i>
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+                                {{ cart_item_count if cart_item_count else '0' }}
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container-fluid py-4 section-bg">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3 mt-auto">
+        <p>&copy; 2024 ShopSmart. All rights reserved.</p>
+    </footer>
+
+    <!-- Chatbot Widget -->
+    <button class="btn btn-primary rounded-circle shadow-lg p-3 chatbot-toggler"
+        style="position: fixed; bottom: 30px; right: 30px; z-index: 10000; width: 60px; height: 60px;">
+        <i class="fa-solid fa-robot fa-xl"></i>
+    </button>
+
+    <div class="card shadow-lg chatbot-interface d-none"
+        style="position: fixed; bottom: 100px; right: 20px; z-index: 10000; width: 350px; height: 60vh; max-height: 500px; display: flex; flex-direction: column;">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 small fw-bold">ShopSmart AI Assistant</h5>
+            <button type="button" class="btn-close btn-close-white small chatbot-close"></button>
+        </div>
+        <div class="card-body bg-light" style="flex: 1; overflow-y: auto;" id="chatbot-messages">
+            <div class="d-flex flex-row justify-content-start mb-2">
+                <div class="chatbot-message-bot">Hello! I'm your AI shopping assistant. Ask me anything about our
+                    products!</div>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-top-0">
+            <div class="input-group">
+                <input type="text" class="form-control" id="chatbot-input" placeholder="Ask a question...">
+                <button class="btn btn-primary" id="chatbot-send">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

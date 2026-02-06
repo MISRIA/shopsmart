@@ -1,0 +1,63 @@
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f3f3f3; /* Light gray background like Amazon */
+}
+
+/* Navbar */
+.navbar-brand {
+    font-size: 1.5rem;
+}
+.nav-link {
+    font-size: 0.9rem;
+}
+
+/* Hero Section */
+.carousel-item h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Product Cards */
+.product-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+    border-radius: 8px; /* Slightly nicer radius */
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.hover-shadow {
+    transition: box-shadow 0.3s;
+    cursor: pointer;
+    background: white;
+    border: none;
+}
+.hover-shadow:hover {
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+/* Buttons */
+.btn-warning {
+    background-color: #ffa41c; /* Amazon orange-ish */
+    border-color: #ff8f00;
+    color: black;
+}
+.btn-warning:hover {
+    background-color: #fa8900;
+}
+
+/* Utilities */
+.section-bg {
+    background-color: #eaeded;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}

@@ -2,6 +2,7 @@ from flask import Flask
 from config import Config
 from app.extensions import db, migrate, login_manager, bcrypt
 
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
@@ -12,7 +13,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     bcrypt.init_app(app)
 
-    # Register Blueprints (Import here to avoid circular imports)
+    # Register Blueprints (import here to avoid circular imports)
     from app.routes.main import main_bp
     from app.routes.auth import auth_bp
     from app.routes.admin import admin_bp
@@ -23,8 +24,18 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(api_bp, url_prefix='/api')
 
-    # Create database structure if not exists (for dev)
+    # Create database tables + AUTO-SEED (Render Free Tier safe)
     with app.app_context():
         db.create_all()
+
+        # Auto-seed only if no products exist
+        from app.models import Product
+        if Product.query.count() == 0:
+            try:
+                from seed import seed_products
+                seed_products()
+                print("✅ Database auto-seeded successfully.")
+            except Exception as e:
+                print("❌ Auto-seeding failed:", e)
 
     return app

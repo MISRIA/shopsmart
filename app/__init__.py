@@ -7,13 +7,17 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # -------------------------
     # Initialize Flask extensions
+    # -------------------------
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
     bcrypt.init_app(app)
 
-    # Register Blueprints (import here to avoid circular imports)
+    # -------------------------
+    # Register Blueprints
+    # -------------------------
     from app.routes.main import main_bp
     from app.routes.auth import auth_bp
     from app.routes.admin import admin_bp
@@ -21,14 +25,15 @@ def create_app(config_class=Config):
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(admin_bp, url_prefix="/admin")
+    app.register_blueprint(api_bp, url_prefix="/api")
 
-    # Create database tables + AUTO-SEED (Render Free Tier safe)
+    # -------------------------
+    # Create DB + Auto-seed safely
+    # -------------------------
     with app.app_context():
         db.create_all()
 
-        # Auto-seed only if no products exist
         from app.models import Product
         if Product.query.count() == 0:
             try:
